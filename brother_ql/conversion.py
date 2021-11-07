@@ -130,7 +130,25 @@ def convert(qlr, images, label,  **kwargs):
             new_im.paste(im, (device_pixel_width-im.size[0]-right_margin_dots, 0))
             im = new_im
 
-        if red:
+        if red and dither:       
+            filter_h = lambda h: 255 if (h <  40 or h > 210) else 0
+            filter_s = lambda s: 255 if s > 100 else 0
+            filter_v = lambda v: 255 if v >  80 else 0
+            red_im = filtered_hsv(im, filter_h, filter_s, filter_v)
+            red_im = red_im.convert("1", dither=Image.FLOYDSTEINBERG)
+            red_im = red_im.convert("L")
+            red_im = PIL.ImageOps.invert(red_im)
+            red_im = red_im.point(lambda x: 0 if x < threshold else 255, mode="1")
+            filter_h = lambda h: 255
+            filter_s = lambda s: 255
+            filter_v = lambda v: 255 if v <  127 else 0
+            black_im = filtered_hsv(im, filter_h, filter_s, filter_v)
+            black_im = black_im.convert("1", dither=Image.FLOYDSTEINBERG)
+            black_im = black_im.convert("L")
+            black_im = PIL.ImageOps.invert(black_im)
+            black_im = black_im.point(lambda x: 0 if x < threshold else 255, mode="1")
+            black_im = PIL.ImageChops.subtract(black_im, red_im)
+        elif red:
             filter_h = lambda h: 255 if (h <  40 or h > 210) else 0
             filter_s = lambda s: 255 if s > 100 else 0
             filter_v = lambda v: 255 if v >  80 else 0
